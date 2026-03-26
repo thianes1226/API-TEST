@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content  %}
+<h2>Liste des eleves</h2>
+    
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Prenom</th>
+      <th scope="col">Nom</th>
+      <th scope="col">Age</th>
+      <th scope="col">Classe</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for etd in students %}
+
+<tr>
+    <th scope="row">1
+      
+    </th>
+    <td>{{etd["prenom"]}}</td>
+    <td>{{etd["nom"]}}</td>
+    <td>{{etd["age"]}}</td>
+    <td>{{etd["classe"]}}</td>
+</tr>
+  
+{% endfor %}
+  </tbody>
+</table>
+
+
+
+{% endblock %}
+
+
