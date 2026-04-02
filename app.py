@@ -1,30 +1,83 @@
-from flask import Flask
-from flask import Flask, render_template, request 
-from data import eleves
-    
+from flask import Flask, jsonify, request
+import psycopg2
+
 app = Flask(__name__)
 
+## Connexion à la base de données
+def get_db_connection():
+    return psycopg2.connect(
+        host="localhost",
+        database="sarr",
+        user="postgres",
+        password="thiane1226"
+    )
 
-## creation du route principale qui est le point entre de app 
-@app.route("/")
-def index(): 
-    return "<h1> Bienvenue dans API de Flask-SEMI  templates </h1>"
-    return render_template("index.html")
+## tester mon API
+@app.route('/')
+def hello():
+    return "Hello, thiane ! bienvenue dans mon API Flask"
 
-@app.route("/eleves")
-def list_eleves(): 
-    return render_template("list_eleves.html", students=eleves)
+## tous les personnes
+@app.route('/people/person')
+def get_people():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM person;")
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    result = []
+    for row in rows:
+        result.append({
+            "id": row[0],
+            "lname": row[1],
+            "fname": row[2],
+            "timestamp": str(row[3])
+        })
+
+    return jsonify(result)
+
+## recupérer une personne par son id
+@app.route('/people/person/<int:id>')
+def get_person_by_id(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM person WHERE id = %s;", (id,))
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if row:
+        return jsonify({
+            "id": row[0],
+            "lname": row[1],
+            "fname": row[2],
+            "timestamp": str(row[3])
+        })
+    else:
+        return jsonify({"message": "Person non trouvée"}), 404
+
+## ajouter une personne
+@app.route('/people/person/add', methods=['GET'])
+def add_person_get():
+    lname = request.args.get('lname')
+    fname = request.args.get('fname')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO person (lname, fname, timestamp) VALUES (%s, %s, CURRENT_TIMESTAMP)",
+        (lname, fname)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"message": "Person ajoutée avec GET"})
 
 
-@app.route("/all")
-def list_all():
-    cl = request.args.get("classe")
-    print(cl)
-    if cl:
-        elvs  = [etd for etd in eleves if etd["classe"] == cl]
-        return render_template("test.html", students=elvs)
-    else: 
-        return render_template("test.html", students=eleves)
-    
-if __name__ == "__main__": 
-    app.run(debug=True )
+if __name__ == '__main__':
+    app.run(debug=True)
